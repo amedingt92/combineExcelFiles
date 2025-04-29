@@ -1,41 +1,55 @@
-# combine_excel.py
+import os
 import pandas as pd
-from pathlib import Path
 
-def combine_excels(input_dir: str, output_file: str):
-    folder = Path(input_dir)
-    all_files = list(folder.glob("*.xlsx"))
 
-    if not all_files:
-        print("No Excel files found in the directory.")
+def read_excel_files(directory):
+    """Read all Excel files in the specified
+    directory and return a list of DataFrames."""
+    data_frames = []
+    for file_name in os.listdir(directory):
+        if file_name.endswith('.xlsx'):
+            file_path = os.path.join(directory, file_name)
+            try:
+                df = pd.read_excel(file_path)
+                data_frames.append(df)
+                print(f"Read {len(df)} rows from {file_path}")
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+    return data_frames
+
+
+def combine_data_frames(data_frames):
+    """Combine multiple DataFrames into a single DataFrame."""
+    combined_df = pd.concat(data_frames, ignore_index=True)
+    return combined_df
+
+
+def save_combined_excel(combined_df, output_path):
+    """Save the combined DataFrame to an Excel file."""
+    try:
+        combined_df.to_excel(output_path, index=False)
+        print(f"Combined file saved to {output_path}")
+    except Exception as e:
+        print(f"Error saving file: {e}")
+
+
+def main():
+    directory = 'data'  # Directory containing the Excel files
+    output_file = 'combined.xlsx'  # Output file name
+
+    data_frames = read_excel_files(directory)
+    if not data_frames:
+        print("No Excel files found in the directory. Exiting.")
         return
 
-    combined_df = None
-    total_rows_expected = 0 
+    combined_df = combine_data_frames(data_frames)
+    expected_rows = sum(len(df) for df in data_frames)
+    actual_rows = len(combined_df)
 
-    for idx, file in enumerate(all_files):
-        df = pd.read_excel(file, engine='openpyxl')
-        if df.empty:
-            continue 
+    print(f"Expected rows: {expected_rows}, Actual rows: {actual_rows}")
 
-        data_rows = len(df) - 1 #exclude headers
-        total_rows_expected += data_rows 
+    save_combined_excel(combined_df, output_file)
 
-        if idx == 0: 
-            combined_df = df
-        else:
-            combined_df = pd.concat([combined_df, df.iloc[1:]], ignore_index=True)  # Skip header row
-
-    actual_data_rows = len(combined_df) - 1
-    
-    print(f"Expected number of data rows (excluding headers): {total_rows_expected}")
-    print(f"Actual number of combined rows: {actual_data_rows}")
-    
-    combined_df.to_excel(output_file, index=False)
-    print(f"Combined Excel saved as: {output_file}")
 
 if __name__ == "__main__":
-    input_folder = "data"  # Change if needed
-    output_filename = "combined.xlsx"
-    combine_excels(input_folder, output_filename)
-    
+    main()
