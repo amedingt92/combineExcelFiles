@@ -1,1 +1,8 @@
 /.venv
+
+# Ignoring the .xlsx files in the data directory by default (in case it contains sensitive data you don't want on GitHub)
+data/*.xlsx 
+data/~$*.xlsx 
+
+# Ignoring the combined.xlsx file by default (in case it contains sensitive data you don't want on GitHub)
+combined.xlsx 
